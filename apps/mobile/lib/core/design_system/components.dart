@@ -567,8 +567,10 @@ class QChatChatBubble extends StatelessWidget {
     this.onLongPress,
     this.avatar,
     this.bubbleWrapper,
+    this.bareMedia = false,
   });
   final bool mine;
+  final bool bareMedia;
   final String name;
   final Widget child;
   final Widget? avatar;
@@ -584,36 +586,43 @@ class QChatChatBubble extends StatelessWidget {
         children: [
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 12),
-            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+            padding: bareMedia
+                ? EdgeInsets.zero
+                : const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
             constraints: BoxConstraints(
               maxWidth: MediaQuery.sizeOf(c).width * .68,
             ),
             decoration: BoxDecoration(
-              color: mine ? QChatColors.bubble : surface(c),
+              color: bareMedia
+                  ? Colors.transparent
+                  : mine
+                  ? QChatColors.bubble
+                  : surface(c),
               borderRadius: BorderRadius.circular(5),
             ),
             child: DefaultTextStyle(
               style: TextStyle(
-                color: mine ? QChatColors.ink : ink(c),
+                color: mine && !bareMedia ? QChatColors.ink : ink(c),
                 fontSize: 16,
                 height: 1.4,
               ),
               child: child,
             ),
           ),
-          Positioned(
-            top: 14,
-            right: mine ? 6 : null,
-            left: mine ? null : 6,
-            child: Transform.rotate(
-              angle: .785398,
-              child: Container(
-                width: 12,
-                height: 12,
-                color: mine ? QChatColors.bubble : surface(c),
+          if (!bareMedia)
+            Positioned(
+              top: 14,
+              right: mine ? 6 : null,
+              left: mine ? null : 6,
+              child: Transform.rotate(
+                angle: .785398,
+                child: Container(
+                  width: 12,
+                  height: 12,
+                  color: mine ? QChatColors.bubble : surface(c),
+                ),
               ),
             ),
-          ),
         ],
       ),
     );

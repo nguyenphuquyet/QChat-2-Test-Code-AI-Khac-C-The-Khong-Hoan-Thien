@@ -904,6 +904,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                     ),
                                   ),
                                 QChatChatBubble(
+                                  bareMedia:
+                                      m['mediaId'] != null &&
+                                      m['recalledAt'] == null &&
+                                      (m['kind'] == 'IMAGE' ||
+                                          m['kind'] == 'VIDEO'),
                                   bubbleWrapper: (bubble) => TPopoverAnchor(
                                     content: menu(m),
                                     placement: TPopoverPlacement.bottom,

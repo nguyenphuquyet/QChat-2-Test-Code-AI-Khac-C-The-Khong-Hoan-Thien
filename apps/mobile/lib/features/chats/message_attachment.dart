@@ -54,37 +54,43 @@ class _MessageAttachmentState extends ConsumerState<MessageAttachment> {
     if (widget.kind == 'IMAGE') {
       return ClipRRect(
         borderRadius: BorderRadius.circular(5),
-        child: SizedBox(
-          width: 210,
-          height: 180,
-          child: MediaImage(id: widget.id),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 210, maxHeight: 260),
+          child: MediaImage(id: widget.id, fit: BoxFit.contain),
         ),
       );
     }
     if (widget.kind == 'VIDEO') {
       final controller = video;
-      return SizedBox(
-        width: 210,
-        height: 160,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            const Positioned.fill(child: ColoredBox(color: Colors.black87)),
-            if (controller != null && controller.value.isInitialized)
-              AspectRatio(
-                aspectRatio: controller.value.aspectRatio,
-                child: VideoPlayer(controller),
-              ),
-            if (!failed &&
-                (controller == null || !controller.value.isInitialized))
-              const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            else
-              const Icon(Icons.play_circle_fill, color: Colors.white, size: 48),
-          ],
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(5),
+        child: SizedBox(
+          width: 210,
+          height: 160,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              const Positioned.fill(child: ColoredBox(color: Colors.black87)),
+              if (controller != null && controller.value.isInitialized)
+                AspectRatio(
+                  aspectRatio: controller.value.aspectRatio,
+                  child: VideoPlayer(controller),
+                ),
+              if (!failed &&
+                  (controller == null || !controller.value.isInitialized))
+                const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                const Icon(
+                  Icons.play_circle_fill,
+                  color: Colors.white,
+                  size: 48,
+                ),
+            ],
+          ),
         ),
       );
     }
