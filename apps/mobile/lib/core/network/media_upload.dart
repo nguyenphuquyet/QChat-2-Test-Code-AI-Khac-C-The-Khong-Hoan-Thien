@@ -44,8 +44,7 @@ base class XFilePlatformFile extends PlatformFile {
       _length ?? _bytes?.length ?? await _xFile.length();
 
   @override
-  Future<Uint8List> readAsBytes() async =>
-      _bytes ?? await _xFile.readAsBytes();
+  Future<Uint8List> readAsBytes() async => _bytes ?? await _xFile.readAsBytes();
 
   @override
   Stream<Uint8List> readAsByteStream() => _xFile.openRead();
@@ -55,47 +54,22 @@ Future<PlatformFile?> pickImageWithSource(
   BuildContext context, {
   List<String>? allowedExtensions,
 }) async {
-  final choice = await showModalBottomSheet<String>(
-    context: context,
-    backgroundColor: surface(context),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-    ),
-    builder: (c) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          ListTile(
-            leading: const TIcon(TIcons.image, size: 24, color: QChatColors.primary),
-            title: Text(tr(c, 'photoLibrary')),
-            onTap: () => Navigator.pop(c, 'gallery'),
-          ),
-          ListTile(
-            leading: const TIcon(TIcons.folder, size: 24, color: QChatColors.primary),
-            title: Text(tr(c, 'fromFiles')),
-            onTap: () => Navigator.pop(c, 'file'),
-          ),
-          const Divider(height: 1),
-          ListTile(
-            title: Center(
-              child: Text(
-                tr(c, 'cancel'),
-                style: const TextStyle(color: QChatColors.muted),
-              ),
-            ),
-            onTap: () => Navigator.pop(c),
-          ),
-        ],
-      ),
+  final choice = await showQChatSheet<String>(
+    context,
+    (c) => Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        QChatOverlayAction(
+          label: tr(c, 'photoLibrary'),
+          icon: const TIcon(TIcons.image, size: 24),
+          onTap: () => Navigator.pop(c, 'gallery'),
+        ),
+        QChatOverlayAction(
+          label: tr(c, 'fromFiles'),
+          icon: const TIcon(TIcons.folder, size: 24),
+          onTap: () => Navigator.pop(c, 'file'),
+        ),
+      ],
     ),
   );
   if (choice == null) return null;
@@ -116,47 +90,22 @@ Future<List<PlatformFile>> pickMediaWithSource(
   BuildContext context, {
   bool video = false,
 }) async {
-  final choice = await showModalBottomSheet<String>(
-    context: context,
-    backgroundColor: surface(context),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-    ),
-    builder: (c) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          ListTile(
-            leading: const TIcon(TIcons.image, size: 24, color: QChatColors.primary),
-            title: Text(tr(c, 'photoLibrary')),
-            onTap: () => Navigator.pop(c, 'gallery'),
-          ),
-          ListTile(
-            leading: const TIcon(TIcons.folder, size: 24, color: QChatColors.primary),
-            title: Text(tr(c, 'fromFiles')),
-            onTap: () => Navigator.pop(c, 'file'),
-          ),
-          const Divider(height: 1),
-          ListTile(
-            title: Center(
-              child: Text(
-                tr(c, 'cancel'),
-                style: const TextStyle(color: QChatColors.muted),
-              ),
-            ),
-            onTap: () => Navigator.pop(c),
-          ),
-        ],
-      ),
+  final choice = await showQChatSheet<String>(
+    context,
+    (c) => Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        QChatOverlayAction(
+          label: tr(c, 'photoLibrary'),
+          icon: const TIcon(TIcons.image, size: 24),
+          onTap: () => Navigator.pop(c, 'gallery'),
+        ),
+        QChatOverlayAction(
+          label: tr(c, 'fromFiles'),
+          icon: const TIcon(TIcons.folder, size: 24),
+          onTap: () => Navigator.pop(c, 'file'),
+        ),
+      ],
     ),
   );
   if (choice == null) return [];

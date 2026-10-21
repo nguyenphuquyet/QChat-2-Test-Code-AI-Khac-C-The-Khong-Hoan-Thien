@@ -247,7 +247,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         unread: member?['markedUnread'] == true
             ? 1
             : ((item['sequence'] as int) -
-                    ((member?['readSequence'] as int?) ?? 0))
+                      ((member?['readSequence'] as int?) ?? 0))
                   .clamp(0, 999),
         onTap: () => c.push('/chat/${item['id']}'),
       ),
@@ -327,7 +327,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               icon: 'addFriend',
               boxed: true,
               color: const Color(0xfffa9d3b),
-              onTap: () => c.push('/friends'),
+              onTap: () => c.push('/friends/requests'),
             ),
             MenuRow(
               'groups',

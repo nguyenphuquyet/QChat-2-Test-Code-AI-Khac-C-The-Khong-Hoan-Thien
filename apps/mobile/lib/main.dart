@@ -66,6 +66,10 @@ class _QChatAppState extends ConsumerState<QChatApp> {
           path: '/friends',
           builder: (_, s) => FriendsScreen(query: s.uri.queryParameters['q']),
         ),
+        qchatRoute(
+          path: '/friends/requests',
+          builder: (_, s) => const FriendsScreen(requestsOnly: true),
+        ),
         qchatRoute(path: '/groups/new', builder: (_, s) => const GroupScreen()),
         qchatRoute(path: '/moments', builder: (_, s) => const MomentsScreen()),
         qchatRoute(path: '/profile', builder: (_, s) => const ProfileScreen()),

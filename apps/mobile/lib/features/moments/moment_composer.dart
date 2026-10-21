@@ -90,73 +90,24 @@ class _MomentComposerState extends ConsumerState<MomentComposer> {
 
   /// Hiện action sheet chọn quyền riêng tư
   void _pickPrivacy() {
-    final bottomInset = MediaQuery.paddingOf(context).bottom;
-    const itemHeight = 52.0;
-    final bottomPadding = bottomInset > 0 ? bottomInset : 10.0;
-    final totalHeight = itemHeight * 2 + 1 + bottomPadding;
-
-    TPopup.show(
+    showQChatSheet<void>(
       context,
-      options: TPopupOptions.bottom(
-        height: totalHeight,
-        useSafeArea: false,
-        radius: 12,
-        backgroundColor: surface(context),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _privacyOption(
-              height: itemHeight,
-              label: tr(context, 'friends'),
-              selected: !private,
+      (c) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final value in [false, true])
+            QChatOverlayAction(
+              label: tr(c, value ? 'private' : 'friends'),
+              selected: private == value,
               onTap: () {
-                Navigator.pop(context);
-                setState(() => private = false);
+                Navigator.pop(c);
+                setState(() => private = value);
               },
             ),
-            Divider(
-              height: 1,
-              thickness: 0.5,
-              color: ink(context).withValues(alpha: 0.08),
-            ),
-            _privacyOption(
-              height: itemHeight,
-              label: tr(context, 'private'),
-              selected: private,
-              onTap: () {
-                Navigator.pop(context);
-                setState(() => private = true);
-              },
-            ),
-            SizedBox(height: bottomPadding),
-          ],
-        ),
+        ],
       ),
     );
   }
-
-  Widget _privacyOption({
-    required double height,
-    required String label,
-    required bool selected,
-    required VoidCallback onTap,
-  }) =>
-      InkWell(
-        onTap: onTap,
-        child: Container(
-          width: double.infinity,
-          height: height,
-          alignment: Alignment.center,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-              color: selected ? QChatColors.green : ink(context),
-            ),
-          ),
-        ),
-      );
 
   @override
   Widget build(BuildContext c) => PopScope(

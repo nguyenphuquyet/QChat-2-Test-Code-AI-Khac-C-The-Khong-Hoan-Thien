@@ -1,5 +1,6 @@
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 import '../localization/strings.dart';
+import 'overlays.dart';
 
 Future<String?> editText(
   BuildContext context,
@@ -12,8 +13,8 @@ Future<String?> editText(
   context: context,
   barrierDismissible: true,
   barrierLabel: tr(context, 'cancel'),
-  barrierColor: const Color(0x66000000),
-  transitionDuration: const Duration(milliseconds: 160),
+  barrierColor: qchatOverlayBarrier,
+  transitionDuration: qchatOverlayDuration,
   pageBuilder: (c, _, _) => _TextDialog(
     title: title,
     initial: initial,

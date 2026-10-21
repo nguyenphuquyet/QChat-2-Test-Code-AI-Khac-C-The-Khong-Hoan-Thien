@@ -255,6 +255,11 @@ const translations = <String, List<String>>{
   'nickname': ['Display name', 'Tên hiển thị', '昵称'],
   'email': ['Email', 'Email', '邮箱'],
   'search': ['Search', 'Tìm kiếm', '搜索'],
+  'emptyFriendRequests': [
+    'No friend requests',
+    'Chưa có yêu cầu kết bạn',
+    '暂无好友请求',
+  ],
   'newFriends': ['New friends', 'Bạn bè mới', '新的朋友'],
   'groups': ['Group chats', 'Trò chuyện nhóm', '群聊'],
   'friends': ['Friends', 'Bạn bè', '好友可见'],
@@ -411,7 +416,11 @@ const translations = <String, List<String>>{
   ],
   'changeGroupName': ['Change group name', 'Đổi tên nhóm', '修改群名称'],
   'groupAvatar': ['Group avatar', 'Ảnh nhóm', '群头像'],
-  'changeGroupAvatar': ['Change group avatar', 'Đổi ảnh đại diện nhóm', '修改群头像'],
+  'changeGroupAvatar': [
+    'Change group avatar',
+    'Đổi ảnh đại diện nhóm',
+    '修改群头像',
+  ],
 };
 String tr(BuildContext context, String key) {
   final language = Localizations.localeOf(context).languageCode;

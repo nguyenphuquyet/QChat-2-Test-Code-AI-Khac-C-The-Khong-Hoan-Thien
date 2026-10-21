@@ -60,30 +60,21 @@ class _ChatDetailsScreenState extends ConsumerState<ChatDetailsScreen> {
   }
 
   Future<void> background() async {
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: surface(context),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (c) => SafeArea(
+    await showQChatSheet<void>(
+      context,
+      (c) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
+              QChatOverlayAction(
+                icon: const TIcon(
+                  TIcons.image,
+                  size: 24,
+                  color: QChatColors.primary,
                 ),
-              ),
-              ListTile(
-                leading: const TIcon(TIcons.image, size: 24, color: QChatColors.primary),
-                title: Text(tr(c, 'selectWallpaper')),
+                label: tr(c, 'selectWallpaper'),
                 onTap: () async {
                   Navigator.pop(c);
                   final file = await pickImageWithSource(context);
@@ -92,28 +83,44 @@ class _ChatDetailsScreenState extends ConsumerState<ChatDetailsScreen> {
                   if (bytes.isNotEmpty) {
                     final base64Str = base64Encode(bytes);
                     final client = ref.read(clientProvider);
-                    await client.local?.removeCache('chatBackground:${widget.id}');
-                    await client.local?.cache('chatBackgroundImage:${widget.id}', base64Str);
+                    await client.local?.removeCache(
+                      'chatBackground:${widget.id}',
+                    );
+                    await client.local?.cache(
+                      'chatBackgroundImage:${widget.id}',
+                      base64Str,
+                    );
                     client.changes.add(null);
                     if (mounted) setState(() {});
                   }
                 },
               ),
-              ListTile(
-                leading: const TIcon(TIcons.close, size: 24, color: QChatColors.danger),
-                title: Text(tr(c, 'clearWallpaper')),
+              QChatOverlayAction(
+                icon: const TIcon(
+                  TIcons.close,
+                  size: 24,
+                  color: QChatColors.danger,
+                ),
+                label: tr(c, 'clearWallpaper'),
                 onTap: () async {
                   Navigator.pop(c);
                   final client = ref.read(clientProvider);
-                  await client.local?.removeCache('chatBackgroundImage:${widget.id}');
-                  await client.local?.removeCache('chatBackground:${widget.id}');
+                  await client.local?.removeCache(
+                    'chatBackgroundImage:${widget.id}',
+                  );
+                  await client.local?.removeCache(
+                    'chatBackground:${widget.id}',
+                  );
                   client.changes.add(null);
                   if (mounted) setState(() {});
                 },
               ),
               const Divider(height: 1),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -127,8 +134,13 @@ class _ChatDetailsScreenState extends ConsumerState<ChatDetailsScreen> {
                         onTap: () async {
                           Navigator.pop(c);
                           final client = ref.read(clientProvider);
-                          await client.local?.removeCache('chatBackgroundImage:${widget.id}');
-                          await client.local?.cache('chatBackground:${widget.id}', value);
+                          await client.local?.removeCache(
+                            'chatBackgroundImage:${widget.id}',
+                          );
+                          await client.local?.cache(
+                            'chatBackground:${widget.id}',
+                            value,
+                          );
                           client.changes.add(null);
                           if (mounted) setState(() {});
                         },
@@ -138,25 +150,12 @@ class _ChatDetailsScreenState extends ConsumerState<ChatDetailsScreen> {
                           decoration: BoxDecoration(
                             color: Color(value),
                             shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.black12,
-                              width: 1,
-                            ),
+                            border: Border.all(color: Colors.black12, width: 1),
                           ),
                         ),
                       ),
                   ],
                 ),
-              ),
-              const Divider(height: 1),
-              ListTile(
-                title: Center(
-                  child: Text(
-                    tr(c, 'cancel'),
-                    style: const TextStyle(color: QChatColors.muted),
-                  ),
-                ),
-                onTap: () => Navigator.pop(c),
               ),
             ],
           ),
@@ -371,7 +370,10 @@ class _ChatDetailsScreenState extends ConsumerState<ChatDetailsScreen> {
             if (conversation!['kind'] == 'GROUP') ...[
               Container(
                 color: surface(c),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 child: Row(
                   children: [
                     Stack(
@@ -388,7 +390,10 @@ class _ChatDetailsScreenState extends ConsumerState<ChatDetailsScreen> {
                               decoration: BoxDecoration(
                                 color: QChatColors.primary,
                                 shape: BoxShape.circle,
-                                border: Border.all(color: surface(c), width: 1.5),
+                                border: Border.all(
+                                  color: surface(c),
+                                  width: 1.5,
+                                ),
                               ),
                               child: const Icon(
                                 Icons.camera_alt,
@@ -429,7 +434,11 @@ class _ChatDetailsScreenState extends ConsumerState<ChatDetailsScreen> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.edit_outlined, size: 20, color: QChatColors.muted),
+                      icon: const Icon(
+                        Icons.edit_outlined,
+                        size: 20,
+                        color: QChatColors.muted,
+                      ),
                       onPressed: busy ? null : changeGroupName,
                     ),
                   ],
@@ -477,7 +486,8 @@ class _ChatDetailsScreenState extends ConsumerState<ChatDetailsScreen> {
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: Theme.of(c).brightness == Brightness.dark
+                                  color:
+                                      Theme.of(c).brightness == Brightness.dark
                                       ? const Color(0xff444444)
                                       : const Color(0xffdcdcdc),
                                   width: 1.2,
@@ -493,10 +503,7 @@ class _ChatDetailsScreenState extends ConsumerState<ChatDetailsScreen> {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          const Text(
-                            '',
-                            style: TextStyle(fontSize: 12),
-                          ),
+                          const Text('', style: TextStyle(fontSize: 12)),
                         ],
                       ),
                     ),

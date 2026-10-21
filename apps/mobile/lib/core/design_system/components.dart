@@ -5,6 +5,8 @@ import '../localization/strings.dart';
 import 'qchat_colors.dart';
 import 'qchat_icons.dart';
 import 'qchat_typography.dart';
+import 'overlays.dart';
+export 'overlays.dart';
 export 'qchat_colors.dart';
 export 'qchat_icons.dart';
 
@@ -69,10 +71,7 @@ class QChatPage extends StatelessWidget {
         decoration: BoxDecoration(
           color: pageColor,
           image: backgroundImage != null
-              ? DecorationImage(
-                  image: backgroundImage!,
-                  fit: BoxFit.cover,
-                )
+              ? DecorationImage(image: backgroundImage!, fit: BoxFit.cover)
               : null,
         ),
         child: Column(
@@ -620,45 +619,21 @@ class QChatChatBubble extends StatelessWidget {
 Future<void> qchatSheet(
   BuildContext context,
   List<(String, VoidCallback)> actions,
-) => showGeneralDialog(
-  context: context,
-  barrierDismissible: true,
-  barrierLabel: tr(context, 'cancel'),
-  barrierColor: const Color(0x66000000),
-  transitionDuration: const Duration(milliseconds: 160),
-  pageBuilder: (c, _, _) {
-    final bottomInset = MediaQuery.paddingOf(c).bottom;
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: DefaultTextStyle(
-        style: TextStyle(color: ink(c), fontSize: 16),
-        child: Container(
-          decoration: BoxDecoration(
-            color: surface(c),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-          ),
-          padding: EdgeInsets.fromLTRB(16, 12, 16, 16 + bottomInset),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final action in actions)
-                QChatListTile(
-                  title: action.$1,
-                  onTap: () {
-                    Navigator.pop(c);
-                    action.$2();
-                  },
-                ),
-              QChatListTile(
-                title: tr(c, 'cancel'),
-                onTap: () => Navigator.pop(c),
-              ),
-            ],
-          ),
+) => showQChatSheet<void>(
+  context,
+  (c) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      for (final action in actions)
+        QChatOverlayAction(
+          label: action.$1,
+          onTap: () {
+            Navigator.pop(c);
+            action.$2();
+          },
         ),
-      ),
-    );
-  },
+    ],
+  ),
 );
 
 class QChatError extends StatelessWidget {
