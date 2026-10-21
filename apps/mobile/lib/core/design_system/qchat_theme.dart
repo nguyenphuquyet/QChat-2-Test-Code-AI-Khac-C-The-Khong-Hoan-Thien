@@ -23,6 +23,7 @@ ThemeData qchatTheme(bool dark) {
     colorSchemeSeed: QChatColors.green,
     extensions: [
       defaultTheme,
+      const TSearchBarThemeData(height: 36),
       TDialogThemeData(
         backgroundColor: dark ? const Color(0xff202020) : Colors.white,
         shape: RoundedRectangleBorder(

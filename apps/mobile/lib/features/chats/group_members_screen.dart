@@ -53,7 +53,10 @@ class _GroupMembersScreenState extends ConsumerState<GroupMembersScreen> {
   Future<void> load() async {
     try {
       final client = ref.read(clientProvider);
-      final data = await client.get('/conversations/${widget.conversationId}', cached: false);
+      final data = await client.get(
+        '/conversations/${widget.conversationId}',
+        cached: false,
+      );
       if (mounted) {
         setState(() {
           conversation = Map<String, dynamic>.from(data);
@@ -178,7 +181,7 @@ class _GroupMembersScreenState extends ConsumerState<GroupMembersScreen> {
               color: surface(c),
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
               child: Container(
-                height: 38,
+                height: 34,
                 decoration: BoxDecoration(
                   color: Theme.of(c).brightness == Brightness.dark
                       ? const Color(0xff2c2c2c)
@@ -190,19 +193,31 @@ class _GroupMembersScreenState extends ConsumerState<GroupMembersScreen> {
                   onChanged: (v) => setState(() => query = v),
                   decoration: InputDecoration(
                     hintText: tr(c, 'searchMembers'),
-                    hintStyle: const TextStyle(fontSize: 14, color: QChatColors.muted),
-                    prefixIcon: const Icon(Icons.search, size: 20, color: QChatColors.muted),
+                    hintStyle: const TextStyle(
+                      fontSize: 14,
+                      color: QChatColors.muted,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      size: 20,
+                      color: QChatColors.muted,
+                    ),
                     suffixIcon: query.isNotEmpty
                         ? GestureDetector(
                             onTap: () {
                               searchController.clear();
                               setState(() => query = '');
                             },
-                            child: const Icon(Icons.close, size: 18, color: QChatColors.muted),
+                            child: const Icon(
+                              Icons.close,
+                              size: 18,
+                              color: QChatColors.muted,
+                            ),
                           )
                         : null,
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 6),
+                    isDense: true,
                   ),
                 ),
               ),
@@ -216,7 +231,10 @@ class _GroupMembersScreenState extends ConsumerState<GroupMembersScreen> {
                 indicatorWeight: 2.5,
                 tabs: [
                   Tab(text: '${tr(c, 'allMembers')} (${members.length})'),
-                  Tab(text: '${tr(c, 'admins')} (${members.where((m) => ['OWNER', 'ADMIN'].contains(m['role'])).length})'),
+                  Tab(
+                    text:
+                        '${tr(c, 'admins')} (${members.where((m) => ['OWNER', 'ADMIN'].contains(m['role'])).length})',
+                  ),
                 ],
               ),
             ),
@@ -226,7 +244,10 @@ class _GroupMembersScreenState extends ConsumerState<GroupMembersScreen> {
                 padding: const EdgeInsets.all(8),
                 child: Text(
                   error!,
-                  style: const TextStyle(color: QChatColors.danger, fontSize: 13),
+                  style: const TextStyle(
+                    color: QChatColors.danger,
+                    fontSize: 13,
+                  ),
                 ),
               ),
             Expanded(
@@ -290,7 +311,11 @@ class _GroupMembersScreenState extends ConsumerState<GroupMembersScreen> {
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
-                  child: TIcon(TIcons.add, color: QChatColors.primary, size: 22),
+                  child: TIcon(
+                    TIcons.add,
+                    color: QChatColors.primary,
+                    size: 22,
+                  ),
                 ),
               ),
               title: Text(
@@ -310,15 +335,22 @@ class _GroupMembersScreenState extends ConsumerState<GroupMembersScreen> {
               image: UserAvatar(m['user'], size: 42),
               title: Text(
                 m['user']?['nickname'] ?? '',
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               note: _buildRoleBadge(c, m['role']),
-              trailing: canManage &&
+              trailing:
+                  canManage &&
                       m['role'] != 'OWNER' &&
                       m['userId'] != currentUserId
                   ? IconButton(
-                      icon: const Icon(Icons.remove_circle_outline,
-                          color: QChatColors.danger, size: 20),
+                      icon: const Icon(
+                        Icons.remove_circle_outline,
+                        color: QChatColors.danger,
+                        size: 20,
+                      ),
                       onPressed: () => removeMember(m),
                     )
                   : null,

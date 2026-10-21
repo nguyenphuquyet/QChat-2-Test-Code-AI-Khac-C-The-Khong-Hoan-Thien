@@ -73,20 +73,33 @@ class QChatOverlayAction extends StatelessWidget {
   final bool selected;
 
   @override
-  Widget build(BuildContext c) => ListTile(
-    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
-    minTileHeight: 52,
-    leading: icon,
-    title: Text(
-      label,
-      style: TextStyle(
-        fontSize: 16,
-        fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+  Widget build(BuildContext c) => InkWell(
+    onTap: onTap,
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 52),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (icon != null) ...[icon!, const SizedBox(width: 12)],
+            Flexible(
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+            ),
+            if (selected) ...[
+              const SizedBox(width: 12),
+              const Icon(Icons.check, color: Color(0xff07c160)),
+            ],
+          ],
+        ),
       ),
     ),
-    trailing: selected
-        ? const Icon(Icons.check, color: Color(0xff07c160))
-        : null,
-    onTap: onTap,
   );
 }

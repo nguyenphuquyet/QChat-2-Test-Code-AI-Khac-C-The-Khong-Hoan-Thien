@@ -15,6 +15,8 @@ import '../../core/design_system/components.dart';
 import '../../core/localization/strings.dart';
 import 'message_status.dart';
 import 'chat_composer.dart';
+import 'attachment_preview.dart';
+import 'message_attachment.dart';
 import 'chat_details_screen.dart';
 import '../../core/design_system/media_widgets.dart';
 import '../../core/design_system/qchat_animations.dart';
@@ -33,6 +35,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   final input = TextEditingController(), scroll = ScrollController();
   List<Map<String, dynamic>> messages = [];
   final selected = <String>{};
+  final messageKeys = <String, GlobalKey>{};
+  String? highlightedMessage;
+  bool locatingQuote = false;
+  Timer? highlightTimer;
   bool selecting = false;
   StreamSubscription<void>? updates;
   StreamSubscription<void>? messageUpdates;
@@ -57,7 +63,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       settlePanels();
     });
     scroll.addListener(() {
-      if (scroll.hasClients &&
+      if (!locatingQuote &&
+          scroll.hasClients &&
           scroll.position.pixels < 20 &&
           messages.any((m) => (m['sequence'] as int? ?? 0) > readSequence)) {
         load();
@@ -91,6 +98,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     messageUpdates?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     panelTimer?.cancel();
+    highlightTimer?.cancel();
     inputFocus.dispose();
     input.dispose();
     scroll.dispose();
@@ -210,9 +218,69 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   ];
 
   void scrollToEnd() {
+    if (locatingQuote) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (scroll.hasClients) scroll.jumpTo(0);
+      if (!locatingQuote && scroll.hasClients) scroll.jumpTo(0);
     });
+  }
+
+  String quoteLabel(String id) {
+    final matches = messages.where((m) => m['id'] == id);
+    if (matches.isEmpty) return tr(context, 'quoteUnavailable');
+    final original = matches.first;
+    if (original['recalledAt'] != null) return tr(context, 'recalled');
+    return original['text']?.toString() ?? tr(context, 'reply');
+  }
+
+  Future<void> jumpToQuote(String id) async {
+    if (locatingQuote) return;
+    dismissInput();
+    final target = messages.indexWhere((m) => m['id'] == id);
+    if (target < 0) {
+      setState(() => error = tr(context, 'quoteUnavailable'));
+      return;
+    }
+    locatingQuote = true;
+    try {
+      for (var step = 0; mounted && step <= messages.length * 2; step++) {
+        final targetContext = messageKeys[id]?.currentContext;
+        if (targetContext != null && targetContext.mounted) {
+          await Scrollable.ensureVisible(
+            targetContext,
+            alignment: .5,
+            duration: const Duration(milliseconds: 250),
+          );
+          if (!mounted) return;
+          highlightTimer?.cancel();
+          setState(() {
+            highlightedMessage = id;
+            error = null;
+          });
+          highlightTimer = Timer(const Duration(seconds: 2), () {
+            if (mounted) setState(() => highlightedMessage = null);
+          });
+          return;
+        }
+        if (!scroll.hasClients) break;
+        final mountedIndices = <int>[
+          for (var i = 0; i < messages.length; i++)
+            if (messageKeys[messages[i]['id']]?.currentContext != null) i,
+        ];
+        final older = mountedIndices.isEmpty || target < mountedIndices.first;
+        final position = scroll.position;
+        final next =
+            (position.pixels +
+                    (older ? 1 : -1) * position.viewportDimension * .7)
+                .clamp(position.minScrollExtent, position.maxScrollExtent)
+                .toDouble();
+        if ((next - position.pixels).abs() < .1) break;
+        scroll.jumpTo(next);
+        await WidgetsBinding.instance.endOfFrame;
+      }
+      if (mounted) setState(() => error = tr(context, 'quoteUnavailable'));
+    } finally {
+      locatingQuote = false;
+    }
   }
 
   Future<void> load() async {
@@ -221,11 +289,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       return;
     }
     fetching = true;
-    final nearEnd = !scroll.hasClients || scroll.offset < 100;
+    final nearEnd =
+        !locatingQuote && (!scroll.hasClients || scroll.offset < 100);
     try {
       final client = ref.read(clientProvider);
       final color = await client.local?.read('chatBackground:${widget.id}');
-      final bgImg = await client.local?.read('chatBackgroundImage:${widget.id}');
+      final bgImg = await client.local?.read(
+        'chatBackgroundImage:${widget.id}',
+      );
       if (mounted) {
         setState(() {
           chatBackground = color is int ? Color(color) : null;
@@ -334,22 +405,33 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   }
 
   Future<void> attachFile(PlatformFile file) async {
-    final bytes = await file.readAsBytes();
-    const mime = {
-      'jpg': 'image/jpeg',
-      'jpeg': 'image/jpeg',
-      'png': 'image/png',
-      'gif': 'image/gif',
-      'webp': 'image/webp',
-      'mp4': 'video/mp4',
-      'mp3': 'audio/mpeg',
-      'pdf': 'application/pdf',
-    };
-    final ext = file.extension?.toLowerCase();
-    final type = mime[ext];
-    if (type == null) return;
+    if (uploading) return;
     setState(() => uploading = true);
     try {
+      if ((await file.length() ?? 0) > maxMediaBytes) {
+        throw StateError('mediaTooLarge');
+      }
+      final bytes = await file.readAsBytes();
+      if (bytes.isEmpty || bytes.length > maxMediaBytes) {
+        throw StateError('mediaTooLarge');
+      }
+      const mime = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'webp': 'image/webp',
+        'mp4': 'video/mp4',
+        'mov': 'video/quicktime',
+        'mp3': 'audio/mpeg',
+        'pdf': 'application/pdf',
+      };
+      final ext = file.extension?.toLowerCase();
+      final type = mime[ext];
+      if (type == null) throw StateError('unsupportedMedia');
+      if (!mounted) return;
+      final confirmed = await previewAttachment(context, file, bytes, type);
+      if (!confirmed || !mounted) return;
       final client = ref.read(clientProvider);
       final intent = await client.post('/media/upload-intent', {
         'name': file.name,
@@ -362,6 +444,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         options: Options(headers: {'Content-Type': type}),
       );
       await client.post('/media/complete', {'mediaId': intent['id']});
+      if (type.startsWith('image/')) {
+        MediaCache.put(intent['id'], bytes, local: client.local);
+      }
       await client.send(
         widget.id,
         file.name,
@@ -375,7 +460,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         mediaId: intent['id'],
       );
     } catch (e) {
-      if (mounted) setState(() => error = tr(context, 'networkError'));
+      if (mounted) {
+        setState(
+          () => error = tr(
+            context,
+            e is StateError ? e.message.toString() : 'networkError',
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => uploading = false);
     }
@@ -386,7 +478,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       type: FileType.custom,
       allowedExtensions:
           extensions ??
-          ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'mp3', 'pdf'],
+          ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'mov', 'mp3', 'pdf'],
     );
     if (result != null) await attachFile(result);
   }
@@ -428,12 +520,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
   Widget attachmentPanel(BuildContext c, double safeBottom) {
     final actions = <(String, String, VoidCallback)>[
-      (
-        'image',
-        'image',
-        attachImage,
-      ),
+      ('image', 'image', attachImage),
       ('camera', 'camera', takePhoto),
+      (
+        'videoCall',
+        'video',
+        () async {
+          final files = await pickMediaWithSource(context, video: true);
+          if (files.isNotEmpty && mounted) await attachFile(files.first);
+        },
+      ),
       ('location', 'location', () => openFeature(c, 'location')),
       ('favorites', 'favorites', () => c.push('/favorites')),
       ('me', 'contactCard', () => openFeature(c, 'contactCard')),
@@ -641,6 +737,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     ];
     return Builder(
       builder: (c) => Wrap(
+        alignment: WrapAlignment.center,
         children: [
           for (final a in actions)
             SizedBox(
@@ -767,111 +864,144 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                               mine =
                                   m['senderId'] ==
                                   ref.read(clientProvider).userId;
-                          return Column(
-                            children: [
-                              if (showTime(i))
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
-                                  ),
-                                  child: Text(
-                                    messageTime(m['createdAt']),
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: QChatColors.muted,
+                          return AnimatedContainer(
+                            key: messageKeys.putIfAbsent(
+                              m['id'].toString(),
+                              () => GlobalKey(),
+                            ),
+                            duration: const Duration(milliseconds: 200),
+                            color: highlightedMessage == m['id']
+                                ? QChatColors.green.withValues(alpha: .18)
+                                : Colors.transparent,
+                            child: Column(
+                              children: [
+                                if (showTime(i))
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    child: Text(
+                                      messageTime(m['createdAt']),
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: QChatColors.muted,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              if (selecting && m['pending'] != true)
-                                TButton(
-                                  variant: TButtonVariant.text,
-                                  onPressed: () => setState(
-                                    () => selected.contains(m['id'])
-                                        ? selected.remove(m['id'])
-                                        : selected.add(m['id']),
+                                if (selecting && m['pending'] != true)
+                                  TButton(
+                                    variant: TButtonVariant.text,
+                                    onPressed: () => setState(
+                                      () => selected.contains(m['id'])
+                                          ? selected.remove(m['id'])
+                                          : selected.add(m['id']),
+                                    ),
+                                    child: TIcon(
+                                      selected.contains(m['id'])
+                                          ? TIcons.check_circle_filled
+                                          : TIcons.circle,
+                                      color: QChatColors.green,
+                                    ),
                                   ),
-                                  child: TIcon(
-                                    selected.contains(m['id'])
-                                        ? TIcons.check_circle_filled
-                                        : TIcons.circle,
-                                    color: QChatColors.green,
+                                QChatChatBubble(
+                                  bubbleWrapper: (bubble) => TPopoverAnchor(
+                                    content: menu(m),
+                                    placement: TPopoverPlacement.bottom,
+                                    width:
+                                        MediaQuery.sizeOf(
+                                          c,
+                                        ).width.clamp(0, 430) -
+                                        24,
+                                    showArrow: true,
+                                    builder: (_, controller, _) =>
+                                        GestureDetector(
+                                          onLongPress: controller.open,
+                                          child: bubble,
+                                        ),
                                   ),
-                                ),
-                              TPopoverAnchor(
-                                content: menu(m),
-                                placement: TPopoverPlacement.bottom,
-                                width:
-                                    MediaQuery.sizeOf(c).width.clamp(0, 430) -
-                                    24,
-                                showArrow: true,
-                                builder: (anchor, controller, _) =>
-                                    QChatChatBubble(
-                                      mine: mine,
-                                      avatar: UserAvatar(
-                                        members.cast<Map>().firstWhere(
-                                          (member) =>
-                                              member['userId'] == m['senderId'],
-                                          orElse: () => {
-                                            'user':
-                                                m['sender'] ??
-                                                {
-                                                  'nickname': mine
-                                                      ? myName
-                                                      : title,
-                                                },
-                                          },
-                                        )['user'],
-                                        size: 42,
-                                      ),
-                                      name: mine ? myName : title,
-                                      onLongPress: controller.open,
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          if (m['replyToId'] != null)
-                                            Text(
-                                              '↳ ${tr(c, 'reply')}',
+                                  mine: mine,
+                                  avatar: UserAvatar(
+                                    members.cast<Map>().firstWhere(
+                                      (member) =>
+                                          member['userId'] == m['senderId'],
+                                      orElse: () => {
+                                        'user':
+                                            m['sender'] ??
+                                            {'nickname': mine ? myName : title},
+                                      },
+                                    )['user'],
+                                    size: 42,
+                                  ),
+                                  name: mine ? myName : title,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      if (m['replyToId'] != null)
+                                        GestureDetector(
+                                          onTap: () => jumpToQuote(
+                                            m['replyToId'].toString(),
+                                          ),
+                                          child: Container(
+                                            padding: const EdgeInsets.all(8),
+                                            margin: const EdgeInsets.only(
+                                              bottom: 8,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.black.withValues(
+                                                alpha: .06,
+                                              ),
+                                              border: const Border(
+                                                left: BorderSide(
+                                                  color: QChatColors.muted,
+                                                  width: 2,
+                                                ),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              '↳ ${quoteLabel(m['replyToId'].toString())}',
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
                                               style: const TextStyle(
                                                 fontSize: 12,
                                                 color: QChatColors.muted,
                                               ),
                                             ),
-                                          if (m['mediaId'] != null)
-                                            GestureDetector(
-                                              onTap: () => context.push(
-                                                '/media/${m['mediaId']}',
-                                              ),
-                                              child: Padding(
-                                                padding: const EdgeInsets.only(
-                                                  bottom: 8,
-                                                ),
-                                                child: QChatIcon(
-                                                  m['kind'] == 'IMAGE'
-                                                      ? 'image'
-                                                      : 'file',
-                                                  size: 40,
-                                                ),
-                                              ),
-                                            ),
-                                          Text(
-                                            m['recalledAt'] != null
-                                                ? tr(c, 'recalled')
-                                                : m['text'] ?? '',
                                           ),
-                                        ],
-                                      ),
-                                    ),
-                              ),
-                              if (i == lastOutgoing)
-                                MessageStatus(
-                                  status: ref
-                                      .read(clientProvider)
-                                      .messageStatus(m, members),
-                                  onRetry: () =>
-                                      ref.read(clientProvider).flush(),
+                                        ),
+                                      if (m['mediaId'] != null &&
+                                          m['recalledAt'] == null)
+                                        GestureDetector(
+                                          onTap: () => context.push(
+                                            '/media/${m['mediaId']}',
+                                          ),
+                                          child: MessageAttachment(
+                                            key: ValueKey(m['mediaId']),
+                                            id: m['mediaId'].toString(),
+                                            kind: m['kind'] ?? 'FILE',
+                                            name: m['text'] ?? '',
+                                          ),
+                                        ),
+                                      if (m['mediaId'] == null ||
+                                          m['recalledAt'] != null)
+                                        Text(
+                                          m['recalledAt'] != null
+                                              ? tr(c, 'recalled')
+                                              : m['text'] ?? '',
+                                        ),
+                                    ],
+                                  ),
                                 ),
-                            ],
+                                if (i == lastOutgoing)
+                                  MessageStatus(
+                                    status: ref
+                                        .read(clientProvider)
+                                        .messageStatus(m, members),
+                                    onRetry: () =>
+                                        ref.read(clientProvider).flush(),
+                                  ),
+                              ],
+                            ),
                           );
                         },
                       ),

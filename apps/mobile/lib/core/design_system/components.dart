@@ -237,33 +237,47 @@ class QChatSearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext c) => Padding(
     padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
-    child: Stack(
-      alignment: Alignment.center,
-      children: [
-        TInput(
-          controller: controller,
-          hintText: '',
-          onChanged: onChanged,
-          borderless: true,
-        ),
-        if (controller.text.isEmpty)
-          IgnorePointer(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const QChatIcon('search', size: 20, color: Color(0xffb2b2b2)),
-                const SizedBox(width: 6),
-                Text(
-                  tr(c, 'search'),
-                  style: const TextStyle(
-                    fontSize: 17,
-                    color: Color(0xffb2b2b2),
-                  ),
+    child: Theme(
+      data: Theme.of(c).copyWith(
+        extensions: [
+          ...Theme.of(c).extensions.values.where((e) => e is! TInputThemeData),
+          (Theme.of(c).extension<TInputThemeData>() ?? const TInputThemeData())
+              .copyWith(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 7,
                 ),
-              ],
-            ),
+              ),
+        ],
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          TInput(
+            controller: controller,
+            hintText: '',
+            onChanged: onChanged,
+            borderless: true,
           ),
-      ],
+          if (controller.text.isEmpty)
+            IgnorePointer(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const QChatIcon('search', size: 20, color: Color(0xffb2b2b2)),
+                  const SizedBox(width: 6),
+                  Text(
+                    tr(c, 'search'),
+                    style: const TextStyle(
+                      fontSize: 17,
+                      color: Color(0xffb2b2b2),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
     ),
   );
 }
@@ -552,57 +566,58 @@ class QChatChatBubble extends StatelessWidget {
     required this.child,
     this.onLongPress,
     this.avatar,
+    this.bubbleWrapper,
   });
   final bool mine;
   final String name;
   final Widget child;
   final Widget? avatar;
+  final Widget Function(Widget)? bubbleWrapper;
   final VoidCallback? onLongPress;
   @override
   Widget build(BuildContext c) {
     final avatar = this.avatar ?? QChatAvatar(name, size: 42);
-    final bubble = Flexible(
-      child: GestureDetector(
-        onLongPress: onLongPress,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.sizeOf(c).width * .68,
+    final body = GestureDetector(
+      onLongPress: onLongPress,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.sizeOf(c).width * .68,
+            ),
+            decoration: BoxDecoration(
+              color: mine ? QChatColors.bubble : surface(c),
+              borderRadius: BorderRadius.circular(5),
+            ),
+            child: DefaultTextStyle(
+              style: TextStyle(
+                color: mine ? QChatColors.ink : ink(c),
+                fontSize: 16,
+                height: 1.4,
               ),
-              decoration: BoxDecoration(
+              child: child,
+            ),
+          ),
+          Positioned(
+            top: 14,
+            right: mine ? 6 : null,
+            left: mine ? null : 6,
+            child: Transform.rotate(
+              angle: .785398,
+              child: Container(
+                width: 12,
+                height: 12,
                 color: mine ? QChatColors.bubble : surface(c),
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: DefaultTextStyle(
-                style: TextStyle(
-                  color: mine ? QChatColors.ink : ink(c),
-                  fontSize: 16,
-                  height: 1.4,
-                ),
-                child: child,
               ),
             ),
-            Positioned(
-              top: 14,
-              right: mine ? 6 : null,
-              left: mine ? null : 6,
-              child: Transform.rotate(
-                angle: .785398,
-                child: Container(
-                  width: 12,
-                  height: 12,
-                  color: mine ? QChatColors.bubble : surface(c),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
+    final bubble = Flexible(child: bubbleWrapper?.call(body) ?? body);
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
       child: Row(

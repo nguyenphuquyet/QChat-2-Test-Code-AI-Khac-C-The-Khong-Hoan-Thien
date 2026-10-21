@@ -91,45 +91,85 @@ class SectionLabel extends StatelessWidget {
 Future<void> qchatTopMenu(
   BuildContext context,
   List<(String, String, VoidCallback)> actions,
-) => showGeneralDialog<void>(
+) => showGeneralDialog(
   context: context,
   barrierDismissible: true,
   barrierLabel: tr(context, 'cancel'),
-  barrierColor: qchatOverlayBarrier,
-  transitionDuration: qchatOverlayDuration,
+  barrierColor: Colors.transparent,
+  transitionDuration: const Duration(milliseconds: 120),
   pageBuilder: (c, _, _) => SafeArea(
     child: Align(
       alignment: Alignment.topRight,
       child: Padding(
-        padding: const EdgeInsets.only(
-          top: 49,
-          right: 12,
-          left: 12,
-          bottom: 12,
-        ),
-        child: Material(
-          color: overlaySurface(c),
-          borderRadius: BorderRadius.circular(qchatOverlayRadius),
-          clipBehavior: Clip.antiAlias,
-          child: SizedBox(
-            width: 260,
-            child: SingleChildScrollView(
+        padding: const EdgeInsets.only(top: 49, right: 8),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned(
+              top: -5,
+              right: 15,
+              child: Transform.rotate(
+                angle: .785398,
+                child: Container(
+                  width: 12,
+                  height: 12,
+                  color: const Color(0xff4c4c4c),
+                ),
+              ),
+            ),
+            Container(
+              width: 190,
+              decoration: BoxDecoration(
+                color: const Color(0xff4c4c4c),
+                borderRadius: BorderRadius.circular(5),
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   for (final a in actions)
-                    QChatOverlayAction(
-                      label: tr(c, a.$2),
-                      icon: QChatIcon(a.$1, color: ink(c), size: 24),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
                       onTap: () {
                         Navigator.pop(c);
                         a.$3();
                       },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 18,
+                        ),
+                        decoration: const BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Color(0xff555555),
+                              width: .5,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            QChatIcon(a.$1, color: Colors.white, size: 23),
+                            const SizedBox(width: 13),
+                            Flexible(
+                              child: Text(
+                                tr(c, a.$2),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  decoration: TextDecoration.none,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                 ],
               ),
             ),
-          ),
+          ],
         ),
       ),
     ),

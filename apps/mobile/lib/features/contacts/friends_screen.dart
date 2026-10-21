@@ -120,7 +120,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                         borderRadius: 6,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 14,
-                          vertical: 10,
+                          vertical: 7,
                         ),
                         hintStyle: const TextStyle(
                           fontSize: 16,

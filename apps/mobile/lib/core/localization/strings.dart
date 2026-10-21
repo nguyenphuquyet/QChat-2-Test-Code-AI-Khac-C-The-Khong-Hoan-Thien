@@ -260,6 +260,17 @@ const translations = <String, List<String>>{
     'Chưa có yêu cầu kết bạn',
     '暂无好友请求',
   ],
+  'attachmentPreview': ['Preview attachment', 'Xem trước tệp đính kèm', '附件预览'],
+  'previewUnavailable': [
+    'Preview unavailable',
+    'Không thể xem trước tệp này',
+    '无法预览此文件',
+  ],
+  'quoteUnavailable': [
+    'Original message is unavailable',
+    'Tin nhắn gốc không còn khả dụng',
+    '原消息不可用',
+  ],
   'newFriends': ['New friends', 'Bạn bè mới', '新的朋友'],
   'groups': ['Group chats', 'Trò chuyện nhóm', '群聊'],
   'friends': ['Friends', 'Bạn bè', '好友可见'],
