@@ -34,7 +34,8 @@ class _SettingsToolsState extends ConsumerState<SettingsTools> {
       'storage' =>
         client.local?.cacheStats() ??
             Future.value((bytes: 0, entries: 0, pending: 0)),
-      'conversations' => client.get('/conversations', cached: false),
+      'conversations' ||
+      'chatHistoryManagement' => client.get('/conversations', cached: false),
       'calls' => client.get('/calls', cached: false),
       'blocks' => client.get('/blocks', cached: false),
       _ => client.get('/users/me', cached: false),
@@ -220,6 +221,14 @@ class _SettingsToolsState extends ConsumerState<SettingsTools> {
                     ),
                   ),
               ]);
+            case 'chatHistoryManagement':
+              widgets.addAll([
+                row('exportData', exportData),
+                note('exportDataNote'),
+                if ((s.data as List).isEmpty) QChatEmptyState(tr(c, 'noItems')),
+                for (final chat in s.data as List)
+                  conversation(c, chat, history: true),
+              ]);
             case 'conversations':
               widgets.addAll([
                 if ((s.data as List).isEmpty) QChatEmptyState(tr(c, 'noItems')),
@@ -265,7 +274,7 @@ class _SettingsToolsState extends ConsumerState<SettingsTools> {
     );
   }
 
-  Widget conversation(BuildContext c, Map chat) {
+  Widget conversation(BuildContext c, Map chat, {bool history = false}) {
     final client = ref.read(clientProvider);
     final members = chat['members'] as List;
     final state = members.firstWhere((m) => m['userId'] == client.userId);
@@ -284,12 +293,33 @@ class _SettingsToolsState extends ConsumerState<SettingsTools> {
     });
     return QChatListTile(
       title: title,
-      subtitle:
-          '${tr(c, 'pin')}: ${state['pinned'] == true ? '✓' : '—'} · ${tr(c, 'mute')}: ${state['muted'] == true ? '✓' : '—'}',
+      subtitle: history
+          ? tr(c, 'chatHistoryManagement')
+          : '${tr(c, 'pin')}: ${state['pinned'] == true ? '✓' : '—'} · ${tr(c, 'mute')}: ${state['muted'] == true ? '✓' : '—'}',
       onTap: () => qchatSheet(c, [
         (tr(c, 'openChat'), () => c.push('/chat/${chat['id']}')),
-        (tr(c, 'pin'), () => toggle('pinned')),
-        (tr(c, 'mute'), () => toggle('muted')),
+        if (!history) ...[
+          (tr(c, 'pin'), () => toggle('pinned')),
+          (tr(c, 'mute'), () => toggle('muted')),
+        ],
+        if (history)
+          (
+            tr(c, 'clearHistory'),
+            () async {
+              if (!await confirmAction(
+                    c,
+                    tr(c, 'clearHistory'),
+                    tr(c, 'clearHistoryNote'),
+                  ) ||
+                  !mounted) {
+                return;
+              }
+              await action(() async {
+                await client.clearHistory(chat['id']);
+                client.changes.add(null);
+              });
+            },
+          ),
       ]),
     );
   }

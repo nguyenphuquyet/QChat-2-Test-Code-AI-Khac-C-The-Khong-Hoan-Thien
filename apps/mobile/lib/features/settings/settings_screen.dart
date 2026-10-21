@@ -3,6 +3,7 @@ import 'package:tdesign_flutter/tdesign_flutter.dart';
 import 'package:go_router/go_router.dart';
 import '../../app/providers.dart';
 import 'settings_tools.dart';
+import 'settings_extras.dart';
 import '../../core/design_system/dialogs.dart';
 import '../../core/design_system/components.dart';
 import '../../core/design_system/reference_widgets.dart';
@@ -22,9 +23,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     super.dispose();
   }
 
-  Widget entry(BuildContext c, String key, {String? route}) =>
+  Widget entry(BuildContext c, String key, {String? route, String? value}) =>
       tr(c, key).toLowerCase().contains(search.text.toLowerCase())
-      ? MenuRow(key, onTap: () => c.push(route ?? '/settings/$key'))
+      ? MenuRow(
+          key,
+          value: value,
+          trailing: value == null
+              ? const QChatIcon('chevron', color: QChatColors.muted, size: 18)
+              : null,
+          onTap: () => c.push(route ?? '/settings/$key'),
+        )
       : const SizedBox.shrink();
   @override
   Widget build(BuildContext c) => QChatPage(
@@ -47,21 +55,61 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         entry(c, 'display'),
         entry(c, 'friendPermissions'),
         entry(c, 'storage'),
-        entry(c, 'more', route: '/about'),
+        entry(c, 'more'),
         const SectionLabel('features'),
         entry(c, 'conversations'),
         entry(c, 'calls'),
+        entry(c, 'chatHistoryManagement'),
+        entry(c, 'otherFeatures'),
+        entry(c, 'addons'),
+        const SectionLabel('helpAbout'),
+        entry(c, 'feedback'),
+        entry(c, 'about', route: '/about', value: '${tr(c, 'version')} 0.1.0'),
         sectionGap,
-        QChatListTile(
-          title: tr(c, 'logout'),
-          onTap: () async {
-            try {
-              await ref.read(clientProvider).logout();
-              if (c.mounted) c.go('/login');
-            } catch (_) {
-              if (c.mounted) qchatSheet(c, [(tr(c, 'networkError'), () {})]);
-            }
-          },
+        if (tr(
+          c,
+          'switchAccount',
+        ).toLowerCase().contains(search.text.toLowerCase()))
+          Material(
+            color: surface(c),
+            child: QChatOverlayAction(
+              label: tr(c, 'switchAccount'),
+              showDivider: false,
+              onTap: () async {
+                if (!await confirmAction(
+                      c,
+                      tr(c, 'switchAccount'),
+                      tr(c, 'switchAccountNote'),
+                    ) ||
+                    !c.mounted) {
+                  return;
+                }
+                try {
+                  await ref.read(clientProvider).logout();
+                  if (c.mounted) c.go('/login');
+                } catch (_) {
+                  if (c.mounted) {
+                    qchatSheet(c, [(tr(c, 'networkError'), () {})]);
+                  }
+                }
+              },
+            ),
+          ),
+        sectionGap,
+        Material(
+          color: surface(c),
+          child: QChatOverlayAction(
+            label: tr(c, 'logout'),
+            showDivider: false,
+            onTap: () async {
+              try {
+                await ref.read(clientProvider).logout();
+                if (c.mounted) c.go('/login');
+              } catch (_) {
+                if (c.mounted) qchatSheet(c, [(tr(c, 'networkError'), () {})]);
+              }
+            },
+          ),
         ),
         const SizedBox(height: 24),
       ],
@@ -83,6 +131,9 @@ class _SettingsDetailScreenState extends ConsumerState<SettingsDetailScreen> {
       .get('/users/me', cached: false);
   @override
   Widget build(BuildContext c) {
+    if (['more', 'otherFeatures', 'addons', 'feedback'].contains(widget.kind)) {
+      return SettingsExtras(kind: widget.kind);
+    }
     if ([
       'security',
       'permissions',
@@ -90,6 +141,7 @@ class _SettingsDetailScreenState extends ConsumerState<SettingsDetailScreen> {
       'conversations',
       'calls',
       'blocks',
+      'chatHistoryManagement',
     ].contains(widget.kind)) {
       return SettingsTools(kind: widget.kind);
     }

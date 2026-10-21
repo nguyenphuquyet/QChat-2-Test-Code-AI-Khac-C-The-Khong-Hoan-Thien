@@ -1,6 +1,33 @@
 import 'package:flutter/widgets.dart';
 
 const translations = <String, List<String>>{
+  'chatHistoryManagement': [
+    'Manage chat history',
+    'Quản lý lịch sử trò chuyện',
+    '聊天记录管理',
+  ],
+  'otherFeatures': ['Other features', 'Tính năng khác', '其他功能'],
+  'addons': ['Add-ons', 'Cộng', '插件'],
+  'helpAbout': ['Help & About', 'Trợ giúp & Giới thiệu', '帮助与关于'],
+  'feedback': ['Feedback', 'Phản hồi', '意见反馈'],
+  'feedbackHint': [
+    'Describe the issue or suggestion',
+    'Mô tả vấn đề hoặc góp ý của bạn',
+    '描述问题或建议',
+  ],
+  'feedbackNote': [
+    'Write and copy your feedback to share with the administrator. It is not sent automatically.',
+    'Soạn và sao chép phản hồi để gửi cho quản trị viên. Nội dung không được tự động gửi.',
+    '填写并复制反馈以分享给管理员，不会自动发送。',
+  ],
+  'copyFeedback': ['Copy feedback', 'Sao chép phản hồi', '复制反馈'],
+  'switchAccount': ['Switch account', 'Chuyển đổi tài khoản', '切换账号'],
+  'switchAccountNote': [
+    'Sign out to log in with another account? Local data and unsent messages on this device will be removed.',
+    'Đăng xuất để đăng nhập tài khoản khác? Dữ liệu cục bộ và tin nhắn chưa gửi trên thiết bị sẽ bị xóa.',
+    '退出后登录其他账号？此设备的本地数据和未发送消息将被删除。',
+  ],
+  'version': ['Version', 'Phiên bản', '版本'],
   'saved': ['Saved', 'Đã lưu', '已保存'],
   'operationFailed': [
     'Could not save. Check your input and connection, then retry.',
