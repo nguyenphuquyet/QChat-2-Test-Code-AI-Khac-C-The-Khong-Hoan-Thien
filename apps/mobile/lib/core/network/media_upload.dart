@@ -61,12 +61,10 @@ Future<PlatformFile?> pickImageWithSource(
       children: [
         QChatOverlayAction(
           label: tr(c, 'photoLibrary'),
-          icon: const TIcon(TIcons.image, size: 24),
           onTap: () => Navigator.pop(c, 'gallery'),
         ),
         QChatOverlayAction(
           label: tr(c, 'fromFiles'),
-          icon: const TIcon(TIcons.folder, size: 24),
           onTap: () => Navigator.pop(c, 'file'),
         ),
       ],
@@ -97,12 +95,10 @@ Future<List<PlatformFile>> pickMediaWithSource(
       children: [
         QChatOverlayAction(
           label: tr(c, 'photoLibrary'),
-          icon: const TIcon(TIcons.image, size: 24),
           onTap: () => Navigator.pop(c, 'gallery'),
         ),
         QChatOverlayAction(
           label: tr(c, 'fromFiles'),
-          icon: const TIcon(TIcons.folder, size: 24),
           onTap: () => Navigator.pop(c, 'file'),
         ),
       ],

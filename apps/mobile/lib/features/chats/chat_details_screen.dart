@@ -62,104 +62,81 @@ class _ChatDetailsScreenState extends ConsumerState<ChatDetailsScreen> {
   Future<void> background() async {
     await showQChatSheet<void>(
       context,
-      (c) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              QChatOverlayAction(
-                icon: const TIcon(
-                  TIcons.image,
-                  size: 24,
-                  color: QChatColors.primary,
-                ),
-                label: tr(c, 'selectWallpaper'),
-                onTap: () async {
-                  Navigator.pop(c);
-                  final file = await pickImageWithSource(context);
-                  if (file == null) return;
-                  final bytes = await file.readAsBytes();
-                  if (bytes.isNotEmpty) {
-                    final base64Str = base64Encode(bytes);
-                    final client = ref.read(clientProvider);
-                    await client.local?.removeCache(
-                      'chatBackground:${widget.id}',
-                    );
-                    await client.local?.cache(
-                      'chatBackgroundImage:${widget.id}',
-                      base64Str,
-                    );
-                    client.changes.add(null);
-                    if (mounted) setState(() {});
-                  }
-                },
-              ),
-              QChatOverlayAction(
-                icon: const TIcon(
-                  TIcons.close,
-                  size: 24,
-                  color: QChatColors.danger,
-                ),
-                label: tr(c, 'clearWallpaper'),
-                onTap: () async {
-                  Navigator.pop(c);
-                  final client = ref.read(clientProvider);
-                  await client.local?.removeCache(
-                    'chatBackgroundImage:${widget.id}',
-                  );
-                  await client.local?.removeCache(
-                    'chatBackground:${widget.id}',
-                  );
-                  client.changes.add(null);
-                  if (mounted) setState(() {});
-                },
-              ),
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    for (final value in [
-                      0xffededed,
-                      0xffe4eee5,
-                      0xffe5edf5,
-                      0xfff5e8e1,
-                    ])
-                      GestureDetector(
-                        onTap: () async {
-                          Navigator.pop(c);
-                          final client = ref.read(clientProvider);
-                          await client.local?.removeCache(
-                            'chatBackgroundImage:${widget.id}',
-                          );
-                          await client.local?.cache(
-                            'chatBackground:${widget.id}',
-                            value,
-                          );
-                          client.changes.add(null);
-                          if (mounted) setState(() {});
-                        },
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Color(value),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.black12, width: 1),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
+      (c) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          QChatOverlayAction(
+            label: tr(c, 'selectWallpaper'),
+            onTap: () async {
+              Navigator.pop(c);
+              final file = await pickImageWithSource(context);
+              if (file == null) return;
+              final bytes = await file.readAsBytes();
+              if (bytes.isNotEmpty) {
+                final base64Str = base64Encode(bytes);
+                final client = ref.read(clientProvider);
+                await client.local?.removeCache('chatBackground:${widget.id}');
+                await client.local?.cache(
+                  'chatBackgroundImage:${widget.id}',
+                  base64Str,
+                );
+                client.changes.add(null);
+                if (mounted) setState(() {});
+              }
+            },
           ),
-        ),
+          QChatOverlayAction(
+            label: tr(c, 'clearWallpaper'),
+            onTap: () async {
+              Navigator.pop(c);
+              final client = ref.read(clientProvider);
+              await client.local?.removeCache(
+                'chatBackgroundImage:${widget.id}',
+              );
+              await client.local?.removeCache('chatBackground:${widget.id}');
+              client.changes.add(null);
+              if (mounted) setState(() {});
+            },
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                for (final value in [
+                  0xffededed,
+                  0xffe4eee5,
+                  0xffe5edf5,
+                  0xfff5e8e1,
+                ])
+                  GestureDetector(
+                    onTap: () async {
+                      Navigator.pop(c);
+                      final client = ref.read(clientProvider);
+                      await client.local?.removeCache(
+                        'chatBackgroundImage:${widget.id}',
+                      );
+                      await client.local?.cache(
+                        'chatBackground:${widget.id}',
+                        value,
+                      );
+                      client.changes.add(null);
+                      if (mounted) setState(() {});
+                    },
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Color(value),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.black12, width: 1),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
